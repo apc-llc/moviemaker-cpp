@@ -11,7 +11,7 @@ TEST(movie, random_pixels)
 {
 	const unsigned int width = 1024;
 	const unsigned int height = 768;
-	const unsigned int nframes = 4;//128;
+	const unsigned int nframes = 128;
 
 	Movie movie("random_pixels", width, height);
 	
@@ -35,7 +35,7 @@ TEST(movie, svg_image)
 {
 	const unsigned int width = 1024;
 	const unsigned int height = 768;
-	const unsigned int nframes = 4;//128;
+	const unsigned int nframes = 128;
 
 	Movie movie("svg_image", width, height);
 
