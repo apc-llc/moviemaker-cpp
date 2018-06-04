@@ -39,7 +39,19 @@ Additionally, the library offers an interface to encode SVG images.
 ## Prerequisites
 
 ```
-sudo apt install librsvg2-dev libx264-dev libgtk-3-dev
+sudo apt install gcc-c++ cmake librsvg2-dev libx264-dev libgtk-3-dev
+```
+
+## Building
+
+```
+git clone https://github.com/apc-llc/moviemaker-cpp.git
+cd moviemaker-cpp
+mkdir build
+cd build
+cmake ..
+make -j12
+./moviemaker-cpp_test
 ```
 
 ## Acknowledgements
