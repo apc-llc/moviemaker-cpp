@@ -1,6 +1,8 @@
 ## Encode video frame by frame in C++ using FFmpeg
 
-Results of scientific or engineering modelling are often needed to be recorded on-the-fly. That is, the volume of data is often inapplicable to saving all individual frames on disk and postprocess them into video afterwards. This library leverages FFmpeg to embed video encoding directly into frame-producing application:
+<img src="screenshot.png" width="200"/>
+
+Results of scientific or engineering simulations are often needed to be recorded on-the-fly. That is, the volume of data is often inapplicable to saving all individual frames on disk and postprocess them into video afterwards. This library leverages FFmpeg to embed video encoding directly into frame-producing application:
 
 ```cpp
 #include "movie.h"
