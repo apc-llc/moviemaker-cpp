@@ -7,7 +7,21 @@
 
 using namespace std;
 
-Movie::Movie(const string& filename_, const unsigned int width_, const unsigned int height_) :
+// One-time initialization.
+class FFmpegInitialize
+{
+public :
+
+	FFmpegInitialize()
+	{
+		// Loads the whole database of available codecs and formats.
+		av_register_all();
+	}
+};
+
+static FFmpegInitialize ffmpegInitialize;
+
+MovieWriter::MovieWriter(const string& filename_, const unsigned int width_, const unsigned int height_) :
 	
 width(width_), height(height_), iframe(0), pixels(4 * width * height)
 
@@ -16,11 +30,8 @@ width(width_), height(height_), iframe(0), pixels(4 * width * height)
 		(unsigned char*)&pixels[0], CAIRO_FORMAT_RGB24, width, height,
 		cairo_format_stride_for_width(CAIRO_FORMAT_RGB24, width));
 
-	// Loads the whole database of available codecs and formats.
-	av_register_all();
-
 	// Preparing to convert my generated RGB images to YUV frames.
-	convertCtx = sws_getContext(width, height,
+	swsCtx = sws_getContext(width, height,
 		AV_PIX_FMT_RGB24, width, height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
 	// Preparing the data concerning the format and codec,
@@ -28,14 +39,14 @@ width(width_), height(height_), iframe(0), pixels(4 * width * height)
 	const char* fmtext = "mp4";
 	const string filename = filename_ + "." + fmtext;
 	fmt = av_guess_format(fmtext, NULL, NULL);
-	avformat_alloc_output_context2(&oc, NULL, NULL, filename.c_str());
+	avformat_alloc_output_context2(&fc, NULL, NULL, filename.c_str());
 
 	// Setting up the codec.
 	AVCodec* codec = avcodec_find_encoder_by_name("libx264");
 	AVDictionary* opt = NULL;
 	av_dict_set(&opt, "preset", "slow", 0);
 	av_dict_set(&opt, "crf", "20", 0);
-	stream = avformat_new_stream(oc, codec);
+	stream = avformat_new_stream(fc, codec);
 	c = stream->codec;
 	c->width = width;
 	c->height = height;
@@ -44,7 +55,7 @@ width(width_), height(height_), iframe(0), pixels(4 * width * height)
 
 	// Setting up the format, its stream(s),
 	// linking with the codec(s) and write the header.
-	if (oc->oformat->flags & AVFMT_GLOBALHEADER)
+	if (fc->oformat->flags & AVFMT_GLOBALHEADER)
 	{
 		// Some formats require a global header.
 		c->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -55,10 +66,9 @@ width(width_), height(height_), iframe(0), pixels(4 * width * height)
 	// Once the codec is set up, we need to let the container know
 	// which codec are the streams using, in this case the only (video) stream.
 	stream->time_base = (AVRational){ 1, 25 };
-	stream->codec = c;
-	av_dump_format(oc, 0, filename.c_str(), 1);
-	avio_open(&oc->pb, filename.c_str(), AVIO_FLAG_WRITE);
-	int ret = avformat_write_header(oc, &opt);
+	av_dump_format(fc, 0, filename.c_str(), 1);
+	avio_open(&fc->pb, filename.c_str(), AVIO_FLAG_WRITE);
+	int ret = avformat_write_header(fc, &opt);
 	av_dict_free(&opt); 
 
 	// Preparing the containers of the frame data:
@@ -81,7 +91,7 @@ width(width_), height(height_), iframe(0), pixels(4 * width * height)
 	// std::vector<uint8_t> B(width*height*3);
 }
 
-void Movie::addFrame(const string& filename)
+void MovieWriter::addFrame(const string& filename)
 {
 	const string::size_type p(filename.find_last_of('.'));
 	string ext = "";
@@ -113,7 +123,7 @@ void Movie::addFrame(const string& filename)
 	addFrame((uint8_t*)&pixels[0]);
 }
 
-void Movie::addFrame(const uint8_t* pixels)
+void MovieWriter::addFrame(const uint8_t* pixels)
 {
 	// The AVFrame data will be stored as RGBRGBRGB... row-wise,
 	// from left to right and from top to bottom.
@@ -130,7 +140,7 @@ void Movie::addFrame(const uint8_t* pixels)
 
 	// Not actually scaling anything, but just converting
 	// the RGB data to YUV and store it in yuvpic.
-    sws_scale(convertCtx, rgbpic->data, rgbpic->linesize, 0,
+    sws_scale(swsCtx, rgbpic->data, rgbpic->linesize, 0,
     	height, yuvpic->data, yuvpic->linesize);
 
 	av_init_packet(&pkt);
@@ -156,12 +166,12 @@ void Movie::addFrame(const uint8_t* pixels)
 		printf("Writing frame %d (size = %d)\n", iframe++, pkt.size);
 
 		// Write the encoded frame to the mp4 file.
-		av_interleaved_write_frame(oc, &pkt);
+		av_interleaved_write_frame(fc, &pkt);
 		av_packet_unref(&pkt);
 	}
 }
 
-Movie::~Movie()
+MovieWriter::~MovieWriter()
 {	
 	// Writing the delayed frames:
 	for (int got_output = 1; got_output; )
@@ -173,24 +183,24 @@ Movie::~Movie()
 			av_packet_rescale_ts(&pkt, (AVRational){ 1, 25 }, stream->time_base);
 			pkt.stream_index = stream->index;
 			printf("Writing frame %d (size = %d)\n", iframe++, pkt.size);
-			av_interleaved_write_frame(oc, &pkt);
+			av_interleaved_write_frame(fc, &pkt);
 			av_packet_unref(&pkt);
 		}
 	}
 	
 	// Writing the end of the file.
-	av_write_trailer(oc);
+	av_write_trailer(fc);
 
 	// Closing the file.
 	if (!(fmt->flags & AVFMT_NOFILE))
-	    avio_closep(&oc->pb);
+	    avio_closep(&fc->pb);
 	avcodec_close(stream->codec);
 
 	// Freeing all the allocated memory:
-	sws_freeContext(convertCtx);
+	sws_freeContext(swsCtx);
 	av_frame_free(&rgbpic);
 	av_frame_free(&yuvpic);
-	avformat_free_context(oc);
+	avformat_free_context(fc);
 
 	free(cairo_surface);
 }

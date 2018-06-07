@@ -18,7 +18,7 @@ const unsigned int width = 1024;
 const unsigned int height = 768;
 const unsigned int nframes = 128;
 
-Movie movie("random_pixels", width, height);
+MovieWriter movie("random_pixels", width, height);
 
 vector<uint8_t> pixels(4 * width * height);
 for (unsigned int iframe = 0; iframe < nframes; iframe++)

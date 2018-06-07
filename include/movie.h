@@ -18,15 +18,15 @@ extern "C"
 	#include <libavutil/opt.h>
 }
 
-class Movie
+class MovieWriter
 {
 	const unsigned int width, height;
 	unsigned int iframe;
 
-	SwsContext* convertCtx;
+	SwsContext* swsCtx;
 	AVOutputFormat* fmt;
 	AVStream* stream;
-	AVFormatContext* oc;
+	AVFormatContext* fc;
 	AVCodecContext* c;
 	AVPacket pkt;
 
@@ -38,13 +38,35 @@ class Movie
 
 public :
 
-	Movie(const std::string& filename, const unsigned int width, const unsigned int height);
+	MovieWriter(const std::string& filename, const unsigned int width, const unsigned int height);
 
 	void addFrame(const std::string& filename);
 
 	void addFrame(const uint8_t* pixels);
 	
-	~Movie();
+	~MovieWriter();
+};
+
+class MovieReader
+{
+	SwsContext* swsCtx;
+	AVOutputFormat* fmt;
+	AVStream* stream;
+	AVFormatContext* fc;
+	AVCodecContext* c;
+	AVFrame* pFrame;
+	AVFrame* pFrameRGB;
+
+	// The index of video stream.
+	int ivstream;
+
+public :
+
+	MovieReader(const std::string& filename);
+
+	bool getFrame(std::vector<uint8_t>& pixels);
+
+	~MovieReader();	
 };
 
 #endif // MOVIE_H

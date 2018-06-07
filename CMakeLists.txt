@@ -19,8 +19,8 @@ find_package(x264 REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 
 # Manual build type selection (for debugging purposes)
-set(CMAKE_BUILD_TYPE Debug)
-#set(CMAKE_BUILD_TYPE Release)
+#set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 # Enable C++ 11 support
 set(CMAKE_CXX_STANDARD 11)
@@ -34,7 +34,7 @@ include_directories(${RSVG_INCLUDE_DIR})
 include_directories(${SWSCALE_INCLUDE_DIRS})
 include_directories(${X264_INCLUDE_DIR})
 
-file(GLOB_RECURSE LIBRARY_SRC "src/movie.cpp")
+file(GLOB_RECURSE LIBRARY_SRC "src/reader.cpp" "src/writer.cpp")
 
 add_library(${PROJECT_NAME} SHARED ${LIBRARY_SRC})
 target_link_libraries(${PROJECT_NAME} ${GTK3_LIBRARIES} ${X264_LIBRARIES} ${FFMPEG_LIBRARIES} ${SWSCALE_LIBRARIES} ${RSVG_LIBRARY} ${NUMA_LIBRARY})
