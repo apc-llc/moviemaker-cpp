@@ -33,7 +33,7 @@ TEST(movie, random_pixels)
 	}
 
 	{	
-		MovieReader reader("random_pixels");
+		MovieReader reader("random_pixels", width, height);
 		MovieWriter writer("random_pixels2", width, height);
 
 		vector<uint8_t> pixels;	
@@ -42,7 +42,7 @@ TEST(movie, random_pixels)
 			if (!reader.getFrame(pixels))
 				break;
 		
-			writer.addFrame(&pixels[0]);		
+			writer.addFrame(&pixels[0]);
 		}
 	}
 }
@@ -63,7 +63,7 @@ TEST(movie, svg_image)
 	}
 
 	{	
-		MovieReader reader("svg_image");
+		MovieReader reader("svg_image", width, height);
 		MovieWriter writer("svg_image2", width, height);
 
 		vector<uint8_t> pixels;	
@@ -72,7 +72,7 @@ TEST(movie, svg_image)
 			if (!reader.getFrame(pixels))
 				break;
 		
-			writer.addFrame(&pixels[0]);		
+			writer.addFrame(&pixels[0]);
 		}
 	}
 }

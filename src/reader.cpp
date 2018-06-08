@@ -4,7 +4,10 @@
 
 using namespace std;
 
-MovieReader::MovieReader(const string& filename_) : fc(NULL)
+MovieReader::MovieReader(const string& filename_, unsigned int width_, unsigned int height_) :
+
+fc(NULL), width(width_), height(height_)
+
 {
 	int ret;
 
@@ -56,13 +59,13 @@ MovieReader::MovieReader(const string& filename_) : fc(NULL)
 	pFrameRGB = av_frame_alloc();
 
 	// Size of movie frame in pixels.
-	int szframe = avpicture_get_size(AV_PIX_FMT_BGR24, c->width, c->height);
+	int szframe = avpicture_get_size(AV_PIX_FMT_BGR24, width, height);
 
 	// Allocate frame buffer. 
 	uint8_t* buffer = (uint8_t*)av_malloc(szframe * sizeof(uint8_t));
 
 	// Create frame structure.
-	avpicture_fill((AVPicture*)pFrameRGB, buffer, AV_PIX_FMT_BGR24, c->width, c->height);
+	avpicture_fill((AVPicture*)pFrameRGB, buffer, AV_PIX_FMT_BGR24, width, height);
 }
 
 bool MovieReader::getFrame(vector<uint8_t>& pixels)
@@ -83,21 +86,21 @@ bool MovieReader::getFrame(vector<uint8_t>& pixels)
 		SwsContext* swsCtx;
 		swsCtx = sws_getCachedContext(NULL,
 			c->width, c->height, c->pix_fmt,
-			c->width, c->height, AV_PIX_FMT_BGR24,
+			width, height, AV_PIX_FMT_BGR24,
 			SWS_BICUBIC, NULL, NULL, NULL);
 		sws_scale(swsCtx, ((AVPicture*)pFrame)->data, ((AVPicture*)pFrame)->linesize,
 			0, c->height, ((AVPicture *)pFrameRGB)->data, ((AVPicture *)pFrameRGB)->linesize);
 		sws_freeContext(swsCtx);
 
-		pixels.resize(4 * c->width * c->height);
-		for (unsigned int y = 0; y < c->height; y++)
+		pixels.resize(4 * width * height);
+		for (unsigned int y = 0; y < height; y++)
 		{
-			for (unsigned int x = 0; x < c->width; x++)
+			for (unsigned int x = 0; x < width; x++)
 			{
 		    	// rgbpic->linesize[0] is equal to width.
-				pixels[y * 4 * c->width + 4 * x + 0] = pFrameRGB->data[0][y * pFrameRGB->linesize[0] + 3 * x + 0];
-				pixels[y * 4 * c->width + 4 * x + 1] = pFrameRGB->data[0][y * pFrameRGB->linesize[0] + 3 * x + 1];
-				pixels[y * 4 * c->width + 4 * x + 2] = pFrameRGB->data[0][y * pFrameRGB->linesize[0] + 3 * x + 2];
+				pixels[y * 4 * width + 4 * x + 0] = pFrameRGB->data[0][y * pFrameRGB->linesize[0] + 3 * x + 0];
+				pixels[y * 4 * width + 4 * x + 1] = pFrameRGB->data[0][y * pFrameRGB->linesize[0] + 3 * x + 1];
+				pixels[y * 4 * width + 4 * x + 2] = pFrameRGB->data[0][y * pFrameRGB->linesize[0] + 3 * x + 2];
 			}
 		}
 

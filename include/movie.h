@@ -49,6 +49,8 @@ public :
 
 class MovieReader
 {
+	const unsigned int width, height;
+
 	SwsContext* swsCtx;
 	AVOutputFormat* fmt;
 	AVStream* stream;
@@ -62,7 +64,7 @@ class MovieReader
 
 public :
 
-	MovieReader(const std::string& filename);
+	MovieReader(const std::string& filename, const unsigned int width, const unsigned int height);
 
 	bool getFrame(std::vector<uint8_t>& pixels);
 

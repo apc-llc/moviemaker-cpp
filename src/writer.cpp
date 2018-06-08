@@ -96,29 +96,49 @@ void MovieWriter::addFrame(const string& filename)
 	const string::size_type p(filename.find_last_of('.'));
 	string ext = "";
 	if (p != -1) ext = filename.substr(p);
-	if (ext != ".svg")
+
+	if (ext == ".svg")
+	{
+		RsvgHandle* handle = rsvg_handle_new_from_file(filename.c_str(), NULL);
+		if (!handle)
+		{
+			fprintf(stderr, "Error loading SVG data from file \"%s\"\n", filename.c_str());
+			exit(-1);
+		}
+
+		RsvgDimensionData dimensionData; 
+		rsvg_handle_get_dimensions(handle, &dimensionData);
+	
+		cairo_t* cr = cairo_create(cairo_surface); 
+		cairo_scale(cr, (float)width / dimensionData.width, (float)height / dimensionData.height);
+		rsvg_handle_render_cairo(handle, cr);
+
+		cairo_destroy(cr); 
+		rsvg_handle_free(handle);
+	}
+	else if (ext == ".png")
+	{
+		cairo_surface_t* img = cairo_image_surface_create_from_png(filename.c_str());
+
+		int imgw = cairo_image_surface_get_width(img);
+		int imgh = cairo_image_surface_get_height(img);
+
+		cairo_t* cr = cairo_create(cairo_surface);
+		cairo_scale(cr, (float)width / imgw, (float)height / imgh);
+		cairo_set_source_surface(cr, img, 0, 0);
+		cairo_paint(cr);
+		cairo_destroy(cr);
+		cairo_surface_destroy(img);
+
+		unsigned char* data = cairo_image_surface_get_data(cairo_surface);
+		
+		memcpy(&pixels[0], data, pixels.size());
+	}
+	else
 	{
 		fprintf(stderr, "The \"%s\" format is not supported\n", ext.c_str());
 		exit(-1);
 	}
-
-	RsvgHandle* handle = rsvg_handle_new_from_file(filename.c_str(), NULL);
-	if (!handle)
-	{
-		fprintf(stderr, "Error loading SVG data from file \"%s\"\n", filename.c_str());
-		exit(-1);
-	}
-
-
-	RsvgDimensionData dimensionData; 
-	rsvg_handle_get_dimensions(handle, &dimensionData);
-	
-	cairo_t* cr = cairo_create(cairo_surface); 
-	cairo_scale(cr, (float)width / dimensionData.width, (float)height / dimensionData.height);
-	rsvg_handle_render_cairo(handle, cr);
-
-	cairo_destroy(cr); 
-	rsvg_handle_free(handle);
 	
 	addFrame((uint8_t*)&pixels[0]);
 }
@@ -202,6 +222,6 @@ MovieWriter::~MovieWriter()
 	av_frame_free(&yuvpic);
 	avformat_free_context(fc);
 
-	free(cairo_surface);
+	cairo_surface_destroy(cairo_surface);
 }
 
