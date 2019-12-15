@@ -42,7 +42,7 @@ width(width_), height(height_), iframe(0), pixels(4 * width * height)
 	avformat_alloc_output_context2(&fc, NULL, NULL, filename.c_str());
 
 	// Setting up the codec.
-	AVCodec* codec = avcodec_find_encoder_by_name("libx264");
+	AVCodec* codec = avcodec_find_encoder_by_name("libvpx-vp9");
 	AVDictionary* opt = NULL;
 	av_dict_set(&opt, "preset", "slow", 0);
 	av_dict_set(&opt, "crf", "20", 0);
@@ -149,9 +149,9 @@ void MovieWriter::addFrame(const uint8_t* pixels)
 	// from left to right and from top to bottom.
 	for (unsigned int y = 0; y < height; y++)
 	{
-    	for (unsigned int x = 0; x < width; x++)
-    	{
-        	// rgbpic->linesize[0] is equal to width.
+		for (unsigned int x = 0; x < width; x++)
+		{
+			// rgbpic->linesize[0] is equal to width.
 			rgbpic->data[0][y * rgbpic->linesize[0] + 3 * x + 0] = pixels[y * 4 * width + 4 * x + 2];
 			rgbpic->data[0][y * rgbpic->linesize[0] + 3 * x + 1] = pixels[y * 4 * width + 4 * x + 1];
 			rgbpic->data[0][y * rgbpic->linesize[0] + 3 * x + 2] = pixels[y * 4 * width + 4 * x + 0];
@@ -160,8 +160,8 @@ void MovieWriter::addFrame(const uint8_t* pixels)
 
 	// Not actually scaling anything, but just converting
 	// the RGB data to YUV and store it in yuvpic.
-    sws_scale(swsCtx, rgbpic->data, rgbpic->linesize, 0,
-    	height, yuvpic->data, yuvpic->linesize);
+	sws_scale(swsCtx, rgbpic->data, rgbpic->linesize, 0,
+		height, yuvpic->data, yuvpic->linesize);
 
 	av_init_packet(&pkt);
 	pkt.data = NULL;
