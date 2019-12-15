@@ -39,31 +39,17 @@ file(GLOB_RECURSE LIBRARY_SRC "src/reader.cpp" "src/writer.cpp")
 add_library(${PROJECT_NAME} SHARED ${LIBRARY_SRC})
 target_link_libraries(${PROJECT_NAME} ${GTK3_LIBRARIES} ${X264_LIBRARIES} ${FFMPEG_LIBRARIES} ${SWSCALE_LIBRARIES} ${RSVG_LIBRARY} ${NUMA_LIBRARY})
 
-# Enable ExternalProject CMake module
-include(ExternalProject)
+# Prevent GoogleTest from overriding our compiler/linker options
+# when building with Visual Studio
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-# Download and install GoogleTest
-ExternalProject_Add(
-	gtest
-	GIT_REPOSITORY https://github.com/google/googletest.git
-	PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
-	# Disable install step
-	INSTALL_COMMAND ""
-)
+# Add googletest directly to our build. This adds
+# the following targets: gtest, gtest_main, gmock
+# and gmock_main
+add_subdirectory(ThirdParty/googletest EXCLUDE_FROM_ALL)
 
-# Get GTest source and binary directories from CMake project
-ExternalProject_Get_Property(gtest source_dir binary_dir)
-
-# Create a libgtest target to be used as a dependency by test programs
-add_library(libgtest IMPORTED STATIC GLOBAL)
-add_dependencies(libgtest gtest)
-
-# Set libgtest properties
-set_target_properties(libgtest PROPERTIES
-	"IMPORTED_LOCATION" "${binary_dir}/googlemock/gtest/libgtest.a"
-	"IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}")
-
-include_directories("${source_dir}/googletest/include")
+include_directories("${gtest_SOURCE_DIR}/include")
+include_directories("${gmock_SOURCE_DIR}/include")
 
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/data" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -72,5 +58,5 @@ file(GLOB_RECURSE TIGER_SVG "${CMAKE_CURRENT_BINARY_DIR}/data/tiger.svg")
 add_executable(${PROJECT_NAME}_test "src/test.cpp")
 target_compile_definitions(${PROJECT_NAME}_test PUBLIC TESTING)
 target_compile_definitions(${PROJECT_NAME}_test PUBLIC TIGER_SVG="${TIGER_SVG}")
-target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} libgtest ${Thread_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} gtest ${Thread_LIBRARIES})
 
