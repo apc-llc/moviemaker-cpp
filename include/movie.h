@@ -22,6 +22,7 @@ class MovieWriter
 {
 	const unsigned int width, height;
 	unsigned int iframe;
+  int frameRate;
 
 	SwsContext* swsCtx;
 	AVOutputFormat* fmt;
@@ -38,7 +39,7 @@ class MovieWriter
 
 public :
 
-	MovieWriter(const std::string& filename, const unsigned int width, const unsigned int height);
+	MovieWriter(const std::string& filename, const unsigned int width, const unsigned int height, const int frameRate = 25);
 
 	void addFrame(const std::string& filename);
 
@@ -67,6 +68,7 @@ public :
 	MovieReader(const std::string& filename, const unsigned int width, const unsigned int height);
 
 	bool getFrame(std::vector<uint8_t>& pixels);
+  int getFrameRate() const;
 
 	~MovieReader();	
 };

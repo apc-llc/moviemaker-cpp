@@ -14,7 +14,7 @@ TEST(movie, random_pixels)
 	const unsigned int nframes = 128;
 
 	{
-		MovieWriter writer("random_pixels", width, height);
+		MovieWriter writer("random_pixels", width, height, 30);
 	
 		vector<uint8_t> pixels(4 * width * height);
 		for (unsigned int iframe = 0; iframe < nframes; iframe++)
@@ -34,7 +34,7 @@ TEST(movie, random_pixels)
 
 	{	
 		MovieReader reader("random_pixels", width, height);
-		MovieWriter writer("random_pixels2", width, height);
+		MovieWriter writer("random_pixels2", width, height, reader.getFrameRate());
 
 		vector<uint8_t> pixels;	
 		while (1)
