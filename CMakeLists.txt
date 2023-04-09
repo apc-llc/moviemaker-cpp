@@ -37,7 +37,7 @@ include_directories(${X264_INCLUDE_DIR})
 file(GLOB_RECURSE LIBRARY_SRC "src/reader.cpp" "src/writer.cpp")
 
 add_library(${PROJECT_NAME} SHARED ${LIBRARY_SRC})
-target_link_libraries(${PROJECT_NAME} ${GTK3_LIBRARIES} ${X264_LIBRARIES} ${FFMPEG_LIBRARIES} ${SWSCALE_LIBRARIES} ${RSVG_LIBRARY} ${NUMA_LIBRARY})
+target_link_libraries(${PROJECT_NAME} ${GTK3_LIBRARIES} ${X264_LIBRARIES} ${FFMPEG_LIBRARIES} ${SWSCALE_LIBRARIES} ${RSVG_LIBRARIES} ${NUMA_LIBRARIES})
 
 # Prevent GoogleTest from overriding our compiler/linker options
 # when building with Visual Studio
