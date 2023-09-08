@@ -1,43 +1,43 @@
 # Module for locating libnuma
 #
 # Read-only variables:
-#   Numa_FOUND
+#   NUMA_FOUND
 #     Indicates that the library has been found.
 #
-#   Numa_INCLUDE_DIR
+#   NUMA_INCLUDE_DIR
 #     Points to the libnuma include directory.
 #
-#   Numa_LIBRARY_DIR
+#   NUMA_LIBRARY_DIR
 #     Points to the directory that contains the libraries.
 #     The content of this variable can be passed to link_directories.
 #
-#   Numa_LIBRARY
+#   NUMA_LIBRARY
 #     Points to the libnuma that can be passed to target_link_libararies.
 #
 # Copyright (c) 2013-2017 MulticoreWare, Inc
 
 include(FindPackageHandleStandardArgs)
 
-find_path(Numa_ROOT_DIR
+find_path(NUMA_ROOT_DIR
   NAMES include/numa.h
-  PATHS ENV Numa_ROOT
-  DOC "Numa root directory")
+  PATHS ENV NUMA_ROOT
+  DOC "NUMA root directory")
 
-find_path(Numa_INCLUDE_DIR
+find_path(NUMA_INCLUDE_DIR
   NAMES numa.h
-  HINTS ${Numa_ROOT_DIR}
+  HINTS ${NUMA_ROOT_DIR}
   PATH_SUFFIXES include
-  DOC "Numa include directory")
+  DOC "NUMA include directory")
 
-find_library(Numa_LIBRARY
+find_library(NUMA_LIBRARY
   NAMES numa
-  HINTS ${Numa_ROOT_DIR}
-  DOC "Numa library")
+  HINTS ${NUMA_ROOT_DIR}
+  DOC "NUMA library")
 
-if (Numa_LIBRARY)
-    get_filename_component(Numa_LIBRARY_DIR ${Numa_LIBRARY} PATH)
+if (NUMA_LIBRARY)
+    get_filename_component(NUMA_LIBRARY_DIR ${NUMA_LIBRARY} PATH)
 endif()
 
-mark_as_advanced(Numa_INCLUDE_DIR Numa_LIBRARY_DIR Numa_LIBRARY)
+mark_as_advanced(NUMA_INCLUDE_DIR NUMA_LIBRARY_DIR NUMA_LIBRARY)
 
-find_package_handle_standard_args(Numa REQUIRED_VARS Numa_ROOT_DIR Numa_INCLUDE_DIR Numa_LIBRARY)
+find_package_handle_standard_args(NUMA REQUIRED_VARS NUMA_ROOT_DIR NUMA_INCLUDE_DIR NUMA_LIBRARY)
