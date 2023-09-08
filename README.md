@@ -41,7 +41,7 @@ Additionally, the library offers an interface to encode SVG images.
 ## Prerequisites
 
 ```
-sudo apt install gcc-c++ cmake librsvg2-dev libx264-dev libgtk-3-dev
+sudo apt install cpp cmake librsvg2-dev libx264-dev libgtk-3-dev
 ```
 
 ## Building
