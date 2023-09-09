@@ -97,7 +97,7 @@ bool MovieReader::getFrame(vector<uint8_t>& pixels)
 		{
 			for (unsigned int x = 0; x < width; x++)
 			{
-		    	// rgbpic->linesize[0] is equal to width.
+		    	// pFrameRGB->linesize[0] is equal to width.
 				pixels[y * 4 * width + 4 * x + 0] = pFrameRGB->data[0][y * pFrameRGB->linesize[0] + 3 * x + 0];
 				pixels[y * 4 * width + 4 * x + 1] = pFrameRGB->data[0][y * pFrameRGB->linesize[0] + 3 * x + 1];
 				pixels[y * 4 * width + 4 * x + 2] = pFrameRGB->data[0][y * pFrameRGB->linesize[0] + 3 * x + 2];
