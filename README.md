@@ -52,7 +52,8 @@ sudo apt-get install libavcodec-dev libavfilter-dev libavformat-dev libavutil-de
 ```
 git clone --recurse-submodules -j8 https://github.com/apc-llc/moviemaker-cpp.git
 cd moviemaker-cpp
-mkdir build && cd $_
+mkdir build
+cd build
 cmake ..
 make -j12
 ./moviemaker-cpp_test
