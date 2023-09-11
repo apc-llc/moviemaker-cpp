@@ -44,9 +44,8 @@ width(width_), height(height_), iframe(0), frameRate(frameRate_),
 
 	// Setting up the codec.
 	AVCodec* codec = avcodec_find_encoder_by_name("libvpx-vp9");
-	AVDictionary* opt = NULL;
-	av_dict_set(&opt, "preset", "ultrafast", 0);
-	av_dict_set(&opt, "crf", "23", 0);
+    AVDictionary* opt = NULL;
+    av_dict_set(&opt, "crf", "0.5", 0);
 	stream = avformat_new_stream(fc, codec);
 	c = stream->codec;
 	c->width = width;
