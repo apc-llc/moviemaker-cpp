@@ -55,7 +55,7 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/data" DESTINATION "${CMAKE_CURRENT_BINARY
 
 file(GLOB_RECURSE TIGER_SVG "${CMAKE_CURRENT_BINARY_DIR}/data/tiger.svg")
 
-add_executable(${PROJECT_NAME}_test "src/test.cpp")
+add_executable(${PROJECT_NAME}_test "src/test.cpp" "include/movie.h")
 target_compile_definitions(${PROJECT_NAME}_test PUBLIC TESTING)
 target_compile_definitions(${PROJECT_NAME}_test PUBLIC TIGER_SVG="${TIGER_SVG}")
 target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} gtest ${Thread_LIBRARIES})
