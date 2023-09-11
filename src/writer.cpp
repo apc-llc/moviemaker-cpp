@@ -7,20 +7,6 @@
 
 using namespace std;
 
-// One-time initialization.
-class FFmpegInitialize
-{
-public :
-
-	FFmpegInitialize()
-	{
-		// Loads the whole database of available codecs and formats.
-		av_register_all();
-	}
-};
-
-static FFmpegInitialize ffmpegInitialize;
-
 MovieWriter::MovieWriter(const string& filename_, const unsigned int width_, const unsigned int height_, const int frameRate_) :
 	
 width(width_), height(height_), iframe(0), frameRate(frameRate_),
