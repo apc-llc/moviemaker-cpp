@@ -8,7 +8,7 @@
 # Define CAIRO_MIN_VERSION for which version desired.
 #
 
-INCLUDE(FindPkgConfig)
+find_package(PkgConfig)
 
 IF(Cairo_FIND_REQUIRED)
 	SET(_pkgconfig_REQUIRED "REQUIRED")
