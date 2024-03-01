@@ -22,23 +22,17 @@ pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 #set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_BUILD_TYPE Release)
 
-# Enable C++ 11 support
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${FFMPEG_INCLUDE_DIRS})
-include_directories(${GTK3_INCLUDE_DIRS})
-include_directories(${RSVG_INCLUDE_DIR})
-include_directories(${SWSCALE_INCLUDE_DIRS})
-include_directories(${X264_INCLUDE_DIR})
-
-file(GLOB_RECURSE LIBRARY_SRC "src/reader.cpp" "src/writer.cpp")
-
-add_library(${PROJECT_NAME} SHARED ${LIBRARY_SRC})
+add_library(${PROJECT_NAME} SHARED "src/reader.cpp" "src/writer.cpp" )
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${FFMPEG_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${GTK3_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${RSVG_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${SWSCALE_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${X264_INCLUDE_DIR})
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
 target_link_libraries(${PROJECT_NAME} ${GTK3_LIBRARIES} ${X264_LIBRARIES} ${FFMPEG_LIBRARIES} ${SWSCALE_LIBRARIES} ${RSVG_LIBRARIES} ${NUMA_LIBRARIES})
 
+if (NOT TARGET gtest)
 # Prevent GoogleTest from overriding our compiler/linker options
 # when building with Visual Studio
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -47,9 +41,7 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 # the following targets: gtest, gtest_main, gmock
 # and gmock_main
 add_subdirectory(ThirdParty/googletest EXCLUDE_FROM_ALL)
-
-include_directories("${gtest_SOURCE_DIR}/include")
-include_directories("${gmock_SOURCE_DIR}/include")
+endif()
 
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/data" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -58,5 +50,6 @@ file(GLOB_RECURSE TIGER_SVG "${CMAKE_CURRENT_BINARY_DIR}/data/tiger.svg")
 add_executable(${PROJECT_NAME}_test "src/test.cpp" "include/movie.h")
 target_compile_definitions(${PROJECT_NAME}_test PUBLIC TESTING)
 target_compile_definitions(${PROJECT_NAME}_test PUBLIC TIGER_SVG="${TIGER_SVG}")
+set_property(TARGET ${PROJECT_NAME}_test PROPERTY CXX_STANDARD 11)
 target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} gtest ${Thread_LIBRARIES})
 
