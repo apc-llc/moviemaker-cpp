@@ -8,9 +8,9 @@
 using namespace std;
 
 MovieWriter::MovieWriter(const string& filename_, const unsigned int width_, const unsigned int height_, const int frameRate_) :
-	
+
 width(width_), height(height_), iframe(0), frameRate(frameRate_),
-      pixels(4 * width * height)
+	  pixels(4 * width * height)
 
 {
 	cairo_surface = cairo_image_surface_create_for_data(
@@ -30,8 +30,8 @@ width(width_), height(height_), iframe(0), frameRate(frameRate_),
 
 	// Setting up the codec.
 	AVCodec* codec = avcodec_find_encoder_by_name("libvpx-vp9");
-    AVDictionary* opt = NULL;
-    av_dict_set(&opt, "crf", "0.5", 0);
+	AVDictionary* opt = NULL;
+	av_dict_set(&opt, "crf", "0.5", 0);
 	stream = avformat_new_stream(fc, codec);
 	c = stream->codec;
 	c->width = width;
@@ -55,7 +55,7 @@ width(width_), height(height_), iframe(0), frameRate(frameRate_),
 	av_dump_format(fc, 0, filename.c_str(), 1);
 	avio_open(&fc->pb, filename.c_str(), AVIO_FLAG_WRITE);
 	int ret = avformat_write_header(fc, &opt);
-	av_dict_free(&opt); 
+	av_dict_free(&opt);
 
 	// Preparing the containers of the frame data:
 	// Allocating memory for each RGB frame, which will be lately converted to YUV.
@@ -92,14 +92,14 @@ void MovieWriter::addFrame(const string& filename)
 			exit(-1);
 		}
 
-		RsvgDimensionData dimensionData; 
+		RsvgDimensionData dimensionData;
 		rsvg_handle_get_dimensions(handle, &dimensionData);
-	
-		cairo_t* cr = cairo_create(cairo_surface); 
+
+		cairo_t* cr = cairo_create(cairo_surface);
 		cairo_scale(cr, (float)width / dimensionData.width, (float)height / dimensionData.height);
 		rsvg_handle_render_cairo(handle, cr);
 
-		cairo_destroy(cr); 
+		cairo_destroy(cr);
 		rsvg_handle_free(handle);
 	}
 	else if (ext == ".png")
@@ -117,7 +117,7 @@ void MovieWriter::addFrame(const string& filename)
 		cairo_surface_destroy(img);
 
 		unsigned char* data = cairo_image_surface_get_data(cairo_surface);
-		
+
 		memcpy(&pixels[0], data, pixels.size());
 	}
 	else
@@ -125,7 +125,57 @@ void MovieWriter::addFrame(const string& filename)
 		fprintf(stderr, "The \"%s\" format is not supported\n", ext.c_str());
 		exit(-1);
 	}
-	
+
+	addFrame((uint8_t*)&pixels[0]);
+}
+
+static cairo_status_t png_stream_reader(void *closure, unsigned char *data, unsigned int length)
+{
+	auto ptr = reinterpret_cast<const uint8_t*>(closure);
+	memcpy(data, ptr, length);
+	return CAIRO_STATUS_SUCCESS;
+}
+
+void MovieWriter::addFrame(const std::vector<uint8_t>& data, StillFrameType type)
+{
+	if (type == StillFrameSVG)
+	{
+		RsvgHandle* handle = rsvg_handle_new_from_data(data.data(), data.size(), NULL);
+		if (!handle)
+		{
+			fprintf(stderr, "Error loading SVG data from data stream\n");
+			exit(-1);
+		}
+		RsvgDimensionData dimensionData;
+		rsvg_handle_get_dimensions(handle, &dimensionData);
+		cairo_t* cr = cairo_create(cairo_surface);
+		cairo_scale(cr, (float)width / dimensionData.width, (float)height / dimensionData.height);
+		rsvg_handle_render_cairo(handle, cr);
+		cairo_destroy(cr);
+		rsvg_handle_free(handle);
+	}
+	else if (type == StillFramePNG)
+	{
+		const uint8_t* ptr = data.data();
+		cairo_surface_t* img = cairo_image_surface_create_from_png_stream(
+			png_stream_reader, reinterpret_cast<void*>(const_cast<uint8_t*>(ptr)));
+		int imgw = cairo_image_surface_get_width(img);
+		int imgh = cairo_image_surface_get_height(img);
+		cairo_t* cr = cairo_create(cairo_surface);
+		cairo_scale(cr, (float)width / imgw, (float)height / imgh);
+		cairo_set_source_surface(cr, img, 0, 0);
+		cairo_paint(cr);
+		cairo_destroy(cr);
+		cairo_surface_destroy(img);
+		unsigned char* data = cairo_image_surface_get_data(cairo_surface);
+		memcpy(&pixels[0], data, pixels.size());
+	}
+	else
+	{
+		fprintf(stderr, "The \"%d\" format is not supported\n", type);
+		exit(-1);
+	}
+
 	addFrame((uint8_t*)&pixels[0]);
 }
 
@@ -178,7 +228,7 @@ void MovieWriter::addFrame(const uint8_t* pixels)
 }
 
 MovieWriter::~MovieWriter()
-{	
+{
 	// Writing the delayed frames:
 	for (int got_output = 1; got_output; )
 	{
@@ -193,13 +243,13 @@ MovieWriter::~MovieWriter()
 			av_packet_unref(&pkt);
 		}
 	}
-	
+
 	// Writing the end of the file.
 	av_write_trailer(fc);
 
 	// Closing the file.
 	if (!(fmt->flags & AVFMT_NOFILE))
-	    avio_closep(&fc->pb);
+		avio_closep(&fc->pb);
 	avcodec_close(stream->codec);
 
 	// Freeing all the allocated memory:

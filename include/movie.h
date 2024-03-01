@@ -18,11 +18,17 @@ extern "C"
 	#include <libavutil/opt.h>
 }
 
+enum StillFrameType
+{
+	StillFramePNG,
+	StillFrameSVG
+};
+
 class MovieWriter
 {
 	const unsigned int width, height;
 	unsigned int iframe;
-  int frameRate;
+	int frameRate;
 
 	SwsContext* swsCtx;
 	AVOutputFormat* fmt;
@@ -44,6 +50,8 @@ public :
 	void addFrame(const std::string& filename);
 
 	void addFrame(const uint8_t* pixels);
+	
+	void addFrame(const std::vector<uint8_t>& data, StillFrameType type);
 	
 	~MovieWriter();
 };
@@ -68,7 +76,7 @@ public :
 	MovieReader(const std::string& filename, const unsigned int width, const unsigned int height);
 
 	bool getFrame(std::vector<uint8_t>& pixels);
-  int getFrameRate() const;
+	int getFrameRate() const;
 
 	~MovieReader();	
 };
