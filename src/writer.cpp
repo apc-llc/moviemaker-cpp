@@ -7,7 +7,7 @@
 
 using namespace std;
 
-MovieWriter::MovieWriter(const string& filename_, const unsigned int width_, const unsigned int height_, const int frameRate_) :
+MovieWriter::MovieWriter(const string& filename, const unsigned int width_, const unsigned int height_, const int frameRate_) :
 
 width(width_), height(height_), iframe(0), frameRate(frameRate_),
 	  pixels(4 * width * height)
@@ -23,9 +23,11 @@ width(width_), height(height_), iframe(0), frameRate(frameRate_),
 
 	// Preparing the data concerning the format and codec,
 	// in order to write properly the header, frame data and end of file.
-	const char* fmtext = "mp4";
-	const string filename = filename_ + "." + fmtext;
-	fmt = av_guess_format(fmtext, NULL, NULL);
+	const string::size_type p(filename.find_last_of('.'));
+	string ext = "";
+	if (p != -1) ext = filename.substr(p);
+
+	fmt = av_guess_format(ext.c_str(), NULL, NULL);
 	avformat_alloc_output_context2(&fc, NULL, NULL, filename.c_str());
 
 	// Setting up the codec.

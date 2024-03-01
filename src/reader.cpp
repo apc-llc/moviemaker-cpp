@@ -4,16 +4,18 @@
 
 using namespace std;
 
-MovieReader::MovieReader(const string& filename_, unsigned int width_, unsigned int height_) :
+MovieReader::MovieReader(const string& filename, unsigned int width_, unsigned int height_) :
 
 fc(NULL), width(width_), height(height_)
 
 {
 	int ret;
 
-	const char* fmtext = "mp4";
-	const string filename = filename_ + "." + fmtext;
-	fmt = av_guess_format(fmtext, NULL, NULL);
+	const string::size_type p(filename.find_last_of('.'));
+	string ext = "";
+	if (p != -1) ext = filename.substr(p);
+
+	fmt = av_guess_format(ext.c_str(), NULL, NULL);
 
 	// Get input file format context
 	if ((ret = avformat_open_input(&fc, filename.c_str(), 0, 0)) < 0)
