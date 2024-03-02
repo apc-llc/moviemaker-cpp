@@ -47,11 +47,13 @@ public :
 
 	MovieWriter(const std::string& filename, const unsigned int width, const unsigned int height, const int frameRate = 25);
 
-	void addFrame(const std::string& filename);
-
-	void addFrame(const uint8_t* pixels);
+	void addFrame(const std::string& filename, AVFrame** yuvout = nullptr);
 	
-	void addFrame(const std::vector<uint8_t>& data, StillFrameType type);
+	void addFrame(const std::vector<uint8_t>& data, StillFrameType type, AVFrame** yuvout = nullptr);
+
+	void addFrame(const uint8_t* pixels, AVFrame** yuvout = nullptr);
+
+	void addFrame(AVFrame* yuvframe);
 	
 	~MovieWriter();
 };

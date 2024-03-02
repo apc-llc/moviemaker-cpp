@@ -79,7 +79,7 @@ width(width_), height(height_), iframe(0), frameRate(frameRate_),
 	// std::vector<uint8_t> B(width*height*3);
 }
 
-void MovieWriter::addFrame(const string& filename)
+void MovieWriter::addFrame(const string& filename, AVFrame** yuvout)
 {
 	const string::size_type p(filename.find_last_of('.'));
 	string ext = "";
@@ -128,7 +128,7 @@ void MovieWriter::addFrame(const string& filename)
 		exit(-1);
 	}
 
-	addFrame((uint8_t*)&pixels[0]);
+	addFrame((uint8_t*)&pixels[0], yuvout);
 }
 
 static cairo_status_t png_stream_reader(void *closure, unsigned char *data, unsigned int length)
@@ -138,7 +138,7 @@ static cairo_status_t png_stream_reader(void *closure, unsigned char *data, unsi
 	return CAIRO_STATUS_SUCCESS;
 }
 
-void MovieWriter::addFrame(const std::vector<uint8_t>& data, StillFrameType type)
+void MovieWriter::addFrame(const std::vector<uint8_t>& data, StillFrameType type, AVFrame** yuvout)
 {
 	if (type == StillFrameSVG)
 	{
@@ -174,14 +174,14 @@ void MovieWriter::addFrame(const std::vector<uint8_t>& data, StillFrameType type
 	}
 	else
 	{
-		fprintf(stderr, "The \"%d\" format is not supported\n", type);
+		fprintf(stderr, "The \"%d\" type is not supported\n", type);
 		exit(-1);
 	}
 
-	addFrame((uint8_t*)&pixels[0]);
+	addFrame((uint8_t*)&pixels[0], yuvout);
 }
 
-void MovieWriter::addFrame(const uint8_t* pixels)
+void MovieWriter::addFrame(const uint8_t* pixels, AVFrame** yuvout)
 {
 	// The AVFrame data will be stored as RGBRGBRGB... row-wise,
 	// from left to right and from top to bottom.
@@ -200,7 +200,19 @@ void MovieWriter::addFrame(const uint8_t* pixels)
 	// the RGB data to YUV and store it in yuvpic.
 	sws_scale(swsCtx, rgbpic->data, rgbpic->linesize, 0,
 		height, yuvpic->data, yuvpic->linesize);
+	
+	if (yuvout)
+	{
+		// The user may be willing to keep the YUV frame
+		// to use it again.
+		*yuvout = yuvpic;
+	}
+	
+	addFrame(yuvpic);
+}
 
+void MovieWriter::addFrame(AVFrame* yuvframe)
+{
 	av_init_packet(&pkt);
 	pkt.data = NULL;
 	pkt.size = 0;
@@ -208,10 +220,10 @@ void MovieWriter::addFrame(const uint8_t* pixels)
 	// The PTS of the frame are just in a reference unit,
 	// unrelated to the format we are using. We set them,
 	// for instance, as the corresponding frame number.
-	yuvpic->pts = iframe;
+	yuvframe->pts = iframe;
 
 	int got_output;
-	int ret = avcodec_encode_video2(c, &pkt, yuvpic, &got_output);
+	int ret = avcodec_encode_video2(c, &pkt, yuvframe, &got_output);
 	if (got_output)
 	{
 		fflush(stdout);
