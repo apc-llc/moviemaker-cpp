@@ -34,7 +34,7 @@ class MovieWriter
 	AVOutputFormat* fmt;
 	AVStream* stream;
 	AVFormatContext* fc;
-	AVCodecContext* c;
+	AVCodecContext* ctx;
 	AVPacket pkt;
 
 	AVFrame *rgbpic, *yuvpic;

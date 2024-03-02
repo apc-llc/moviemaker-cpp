@@ -13,7 +13,7 @@ const unsigned int nframes = 128;
 
 TEST(movie, random_pixels_write)
 {
-	MovieWriter writer("random_pixels", width, height, 30);
+	MovieWriter writer("random_pixels.mp4", width, height, 30);
 
 	vector<uint8_t> pixels(4 * width * height);
 	for (unsigned int iframe = 0; iframe < nframes; iframe++)
@@ -33,8 +33,8 @@ TEST(movie, random_pixels_write)
 
 TEST(movie, random_pixels_read)
 {
-	MovieReader reader("random_pixels", width, height);
-	MovieWriter writer("random_pixels2", width, height, reader.getFrameRate());
+	MovieReader reader("random_pixels.mp4", width, height);
+	MovieWriter writer("random_pixels2.mp4", width, height, reader.getFrameRate());
 
 	vector<uint8_t> pixels;	
 	while (1)
@@ -48,7 +48,7 @@ TEST(movie, random_pixels_read)
 
 TEST(movie, svg_image_write)
 {
-	MovieWriter movie("svg_image", width, height);
+	MovieWriter movie("svg_image.mp4", width, height);
 
 	for (unsigned int iframe = 0; iframe < nframes; iframe++)
 	{
@@ -58,8 +58,8 @@ TEST(movie, svg_image_write)
 
 TEST(movie, svg_image_read)
 {	
-	MovieReader reader("svg_image", width, height);
-	MovieWriter writer("svg_image2", width, height);
+	MovieReader reader("svg_image.mp4", width, height);
+	MovieWriter writer("svg_image2.mp4", width, height);
 
 	vector<uint8_t> pixels;	
 	while (1)

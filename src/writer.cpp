@@ -25,7 +25,7 @@ width(width_), height(height_), iframe(0), frameRate(frameRate_),
 	// in order to write properly the header, frame data and end of file.
 	const string::size_type p(filename.find_last_of('.'));
 	string ext = "";
-	if (p != -1) ext = filename.substr(p);
+	if (p != -1) ext = filename.substr(p + 1);
 
 	fmt = av_guess_format(ext.c_str(), NULL, NULL);
 	avformat_alloc_output_context2(&fc, NULL, NULL, filename.c_str());
@@ -34,26 +34,39 @@ width(width_), height(height_), iframe(0), frameRate(frameRate_),
 	AVCodec* codec = avcodec_find_encoder_by_name("libvpx-vp9");
 	AVDictionary* opt = NULL;
 	av_dict_set(&opt, "crf", "0.5", 0);
-	stream = avformat_new_stream(fc, codec);
-	c = stream->codec;
-	c->width = width;
-	c->height = height;
-	c->pix_fmt = AV_PIX_FMT_YUV420P;
-	c->time_base = (AVRational){ 1, frameRate };
 
-	// Setting up the format, its stream(s),
-	// linking with the codec(s) and write the header.
-	if (fc->oformat->flags & AVFMT_GLOBALHEADER)
+	stream = avformat_new_stream(fc, codec);
+	stream->time_base = (AVRational){ 1, frameRate };
+
+	ctx = avcodec_alloc_context3(codec);
+	if (!ctx)
 	{
-		// Some formats require a global header.
-		c->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+		fprintf(stderr, "Could not allocate video codec context\n");
+		exit(-1);
 	}
-	avcodec_open2(c, codec, &opt);
+
+	ctx->width = width;
+	ctx->height = height;
+	ctx->pix_fmt = AV_PIX_FMT_YUV420P;
+	ctx->time_base = (AVRational){ 1, frameRate };
+
+	if (avcodec_open2(ctx, codec, &opt) < 0)
+	{
+		fprintf(stderr, "Could not open codec\n");
+		exit(-1);
+	}
+
+	if (avcodec_parameters_from_context(stream->codecpar, ctx) < 0)
+	{
+		fprintf(stderr, "Could not initialize stream parameters\n");
+		exit(-1);
+	}
+
+	avcodec_open2(ctx, codec, &opt);
 	av_dict_free(&opt);
 
 	// Once the codec is set up, we need to let the container know
 	// which codec are the streams using, in this case the only (video) stream.
-	stream->time_base = (AVRational){ 1, frameRate };
 	av_dump_format(fc, 0, filename.c_str(), 1);
 	avio_open(&fc->pb, filename.c_str(), AVIO_FLAG_WRITE);
 	int ret = avformat_write_header(fc, &opt);
@@ -222,9 +235,20 @@ void MovieWriter::addFrame(AVFrame* yuvframe)
 	// for instance, as the corresponding frame number.
 	yuvframe->pts = iframe;
 
-	int got_output;
-	int ret = avcodec_encode_video2(c, &pkt, yuvframe, &got_output);
-	if (got_output)
+	int ret = avcodec_send_frame(ctx, yuvframe);
+	if (ret < 0)
+	{
+		fprintf(stderr, "Error sending frame to codec, errcode = %d\n", ret);
+		exit(-1);
+	}
+	
+	ret = avcodec_receive_packet(ctx, &pkt);
+	if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
+	{
+		fprintf(stderr, "Error receiving packet from codec, errcode = %d\n", ret);
+		exit(-1);
+	}
+	else if (ret >= 0)
 	{
 		fflush(stdout);
 
@@ -243,11 +267,25 @@ void MovieWriter::addFrame(AVFrame* yuvframe)
 
 MovieWriter::~MovieWriter()
 {
-	// Writing the delayed frames:
-	for (int got_output = 1; got_output; )
+	// Writing the delayed frames.
+	while (1)
 	{
-		int ret = avcodec_encode_video2(c, &pkt, NULL, &got_output);
-		if (got_output)
+		int ret = avcodec_send_frame(ctx, NULL);
+		if (ret == AVERROR_EOF)
+			break;
+		else if (ret < 0)
+		{
+			fprintf(stderr, "Error sending frame to codec, errcode = %d\n", ret);
+			exit(-1);
+		}
+
+		ret = avcodec_receive_packet(ctx, &pkt);
+		if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
+		{
+			fprintf(stderr, "Error receiving packet from codec, errcode = %d\n", ret);
+			exit(-1);
+		}
+		else if (ret >= 0)
 		{
 			fflush(stdout);
 			av_packet_rescale_ts(&pkt, (AVRational){ 1, frameRate }, stream->time_base);
@@ -256,6 +294,8 @@ MovieWriter::~MovieWriter()
 			av_interleaved_write_frame(fc, &pkt);
 			av_packet_unref(&pkt);
 		}
+		else
+			break;
 	}
 
 	// Writing the end of the file.
@@ -264,12 +304,12 @@ MovieWriter::~MovieWriter()
 	// Closing the file.
 	if (!(fmt->flags & AVFMT_NOFILE))
 		avio_closep(&fc->pb);
-	avcodec_close(stream->codec);
 
 	// Freeing all the allocated memory:
 	sws_freeContext(swsCtx);
 	av_frame_free(&rgbpic);
 	av_frame_free(&yuvpic);
+	avcodec_free_context(&ctx);
 	avformat_free_context(fc);
 
 	cairo_surface_destroy(cairo_surface);

@@ -18,10 +18,6 @@ find_package(x264 REQUIRED)
 
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 
-# Manual build type selection (for debugging purposes)
-#set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_BUILD_TYPE Release)
-
 add_library(${PROJECT_NAME} SHARED "src/reader.cpp" "src/writer.cpp" )
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(${PROJECT_NAME} PRIVATE ${FFMPEG_INCLUDE_DIRS})

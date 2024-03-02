@@ -13,7 +13,7 @@ fc(NULL), width(width_), height(height_)
 
 	const string::size_type p(filename.find_last_of('.'));
 	string ext = "";
-	if (p != -1) ext = filename.substr(p);
+	if (p != -1) ext = filename.substr(p + 1);
 
 	fmt = av_guess_format(ext.c_str(), NULL, NULL);
 
