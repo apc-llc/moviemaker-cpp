@@ -32,8 +32,8 @@ width(width_), height(height_), iframe(0), frameRate(frameRate_),
 
 	// Setting up the codec.
 	AVCodec* codec = avcodec_find_encoder_by_name("libvpx-vp9");
-	AVDictionary* opt = NULL;
-	av_dict_set(&opt, "crf", "0.5", 0);
+	AVDictionary* codec_options = NULL;
+	av_dict_set(&codec_options, "crf", "0.5", 0);
 
 	stream = avformat_new_stream(fc, codec);
 	stream->time_base = (AVRational){ 1, frameRate };
@@ -50,7 +50,7 @@ width(width_), height(height_), iframe(0), frameRate(frameRate_),
 	ctx->pix_fmt = AV_PIX_FMT_YUV420P;
 	ctx->time_base = (AVRational){ 1, frameRate };
 
-	if (avcodec_open2(ctx, codec, &opt) < 0)
+	if (avcodec_open2(ctx, codec, &codec_options) < 0)
 	{
 		fprintf(stderr, "Could not open codec\n");
 		exit(-1);
@@ -62,15 +62,17 @@ width(width_), height(height_), iframe(0), frameRate(frameRate_),
 		exit(-1);
 	}
 
-	avcodec_open2(ctx, codec, &opt);
-	av_dict_free(&opt);
+	avcodec_open2(ctx, codec, &codec_options);
+	av_dict_free(&codec_options);
 
 	// Once the codec is set up, we need to let the container know
 	// which codec are the streams using, in this case the only (video) stream.
 	av_dump_format(fc, 0, filename.c_str(), 1);
 	avio_open(&fc->pb, filename.c_str(), AVIO_FLAG_WRITE);
-	int ret = avformat_write_header(fc, &opt);
-	av_dict_free(&opt);
+
+	// TODO Get a dict containing options that were not found.
+	int ret = avformat_write_header(fc, &codec_options);
+	av_dict_free(&codec_options);
 
 	// Preparing the containers of the frame data:
 	// Allocating memory for each RGB frame, which will be lately converted to YUV.
